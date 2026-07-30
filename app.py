@@ -9,7 +9,7 @@ import pandas as pd
 app = Flask(__name__)
 
 # Configurable S3 Bucket (Uses environment variable, with a fallback placeholder)
-S3_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME', 'your-s3-bucket-name-here')
+S3_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME', 'house-price-models-akansana')
 
 s3_client = boto3.client('s3')
 

@@ -49,7 +49,7 @@ import boto3
 from botocore.exceptions import NoCredentialsError
 
 # Fetch the S3 Bucket name from environment variables
-S3_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME', 'your-s3-bucket-name-here')
+S3_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME', 'house-price-models-akansana')
 
 # Initialize the AWS S3 Client
 s3_client = boto3.client('s3')
@@ -83,7 +83,7 @@ Now that the code is ready, here is the architecture setup you will perform in y
 
 1. **Create an S3 Bucket:**
    - Go to Amazon S3.
-   - Create a bucket (e.g., `my-house-pricing-models`).
+   - Create a bucket (e.g., `house-price-models-akansana`).
    - Upload your `housepred.pkl` and `scaler.pkl` files into this bucket.
 
 2. **Create an IAM Role:**
@@ -99,7 +99,7 @@ Now that the code is ready, here is the architecture setup you will perform in y
 4. **Deploy the App to EC2:**
    - SSH into the instance.
    - Clone your project.
-   - Export the bucket name: `export S3_BUCKET_NAME="your-bucket-name"`
+   - Export the bucket name: `export S3_BUCKET_NAME="house-price-models-akansana"`
    - Install dependencies and run the Flask application.
 
 Because of the IAM Role, `boto3` will securely and automatically retrieve temporary credentials in the background, keeping our architecture secure and production-ready!

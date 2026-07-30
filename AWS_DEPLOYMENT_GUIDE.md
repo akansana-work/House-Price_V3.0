@@ -7,7 +7,7 @@ To decouple our large `.pkl` files from the codebase, we store them in S3.
 1. Log in to your [AWS Management Console](https://aws.amazon.com/console/).
 2. Search for **S3** and open the S3 Dashboard.
 3. Click **Create bucket**.
-4. Name your bucket (e.g., `my-house-pricing-models-<your-name>`). It must be globally unique. Keep the default settings and click **Create bucket**.
+4. Name your bucket (e.g., `house-price-models-akansana`). It must be globally unique. Keep the default settings and click **Create bucket**.
 5. Open your new bucket, click **Upload**, and upload `housepred.pkl` and `scaler.pkl` from your local machine.
 
 ## Step 2: Create an IAM Role for EC2
@@ -89,7 +89,7 @@ pip install -r requirements.txt
 You must export the S3 bucket name so the Flask app knows where to fetch the `.pkl` files. Replace `your-bucket-name` with the bucket you created in Step 1.
 
 ```bash
-export S3_BUCKET_NAME="my-house-pricing-models-<your-name>"
+export S3_BUCKET_NAME="house-price-models-akansana"
 gunicorn --bind 0.0.0.0:8000 app:app
 ```
 
@@ -105,7 +105,7 @@ To keep the application running after closing your terminal:
 1. Press `Ctrl + C` to stop the current server.
 2. Run:
    ```bash
-   export S3_BUCKET_NAME="my-house-pricing-models-<your-name>"
+   export S3_BUCKET_NAME="house-price-models-akansana"
    nohup gunicorn --bind 0.0.0.0:8000 app:app &
    ```
 3. Safely close your terminal.
