@@ -1,40 +1,50 @@
-# AWS Deployment Guide (Student Version)
+# AWS Deployment Guide (Production Version - V3.0)
 
-This guide provides step-by-step instructions for deploying the **House Price Prediction** Machine Learning Flask application to a free-tier Amazon Web Services (AWS) EC2 instance.
+This guide provides step-by-step instructions for deploying the **House Price Prediction** Machine Learning Flask application to AWS. This production-grade architecture utilizes **Amazon S3** for dynamic model storage and an **EC2** instance for computing, secured via **IAM Roles**.
 
-## Step 1: Launch an EC2 Instance
+## Step 1: Create an S3 Bucket and Upload Models
+To decouple our large `.pkl` files from the codebase, we store them in S3.
 1. Log in to your [AWS Management Console](https://aws.amazon.com/console/).
-2. Search for **EC2** in the search bar and go to the EC2 Dashboard.
-3. Click the **Launch instance** button.
-4. **Name:** Give your instance a name (e.g., `House-Price-App`).
-5. **OS Images (AMI):** Select **Ubuntu** (the default "Ubuntu Server 24.04 LTS" or similar is fine). Make sure it says *Free tier eligible*.
-6. **Instance Type:** Keep it as **t2.micro** (or `t3.micro`), which is *Free tier eligible*.
-7. **Key Pair:** 
+2. Search for **S3** and open the S3 Dashboard.
+3. Click **Create bucket**.
+4. Name your bucket (e.g., `my-house-pricing-models-<your-name>`). It must be globally unique. Keep the default settings and click **Create bucket**.
+5. Open your new bucket, click **Upload**, and upload `housepred.pkl` and `scaler.pkl` from your local machine.
+
+## Step 2: Create an IAM Role for EC2
+We need to grant our EC2 instance permission to read the files from S3 without hardcoding any AWS credentials in our code.
+1. Search for **IAM** in the AWS Console.
+2. Click **Roles** in the left sidebar, then click **Create role**.
+3. Under **Trusted entity type**, select **AWS service**.
+4. Under **Service or use case**, select **EC2** and click Next.
+5. In the permissions search bar, type `AmazonS3ReadOnlyAccess`. Check the box next to it and click Next.
+6. Name your role (e.g., `EC2-S3-Model-Reader`) and click **Create role**.
+
+## Step 3: Launch an EC2 Instance
+1. Go to the **EC2 Dashboard** and click **Launch instance**.
+2. **Name:** Give your instance a name (e.g., `House-Price-App-V3`).
+3. **OS Images (AMI):** Select **Ubuntu** (the default "Ubuntu Server 24.04 LTS" or similar). Make sure it says *Free tier eligible*.
+4. **Instance Type:** Keep it as **t2.micro** or **t3.micro** (*Free tier eligible*).
+5. **Key Pair:** 
    - Click **Create new key pair**.
-   - Name it (e.g., `house-app-key`).
-   - Choose **RSA** and **.pem** format.
-   - Click **Create key pair**. (A file will download to your computer. Keep it safe!)
-8. **Network Settings:**
-   - Check **Allow SSH traffic from Anywhere** (Port 22).
-   - Check **Allow HTTP traffic from the internet** (Port 80).
-   - *Note: We will open Port 8000 later.*
-9. Click **Launch instance** on the right panel.
+   - Name it (e.g., `house-app-key`), choose **RSA** and **.pem**, then **Create key pair**.
+6. **Network Settings:**
+   - Check **Allow SSH traffic from Anywhere**.
+   - Check **Allow HTTP traffic from the internet**.
+7. **Advanced Details (CRITICAL):**
+   - Scroll down to the **Advanced details** section.
+   - Under **IAM instance profile**, select the role you created in Step 2 (`EC2-S3-Model-Reader`).
+8. Click **Launch instance**.
 
-## Step 2: Open Port 8000 for Gunicorn
-By default, we will run Gunicorn on port 8000. We need to tell the AWS firewall to allow traffic on this port.
-1. Go to your EC2 Instances list and click on your new instance.
-2. At the bottom, select the **Security** tab and click on the **Security group** link (it will look like `sg-0abcd1234...`).
-3. Click **Edit inbound rules**.
-4. Click **Add rule**.
-5. Set the following:
-   - **Type:** Custom TCP
-   - **Port range:** 8000
-   - **Source:** Anywhere-IPv4 (`0.0.0.0/0`)
-6. Click **Save rules**.
+## Step 4: Open Port 8000 for Gunicorn
+1. Go to your EC2 Instances list, select your new instance.
+2. Under the **Security** tab, click the **Security group** link.
+3. Click **Edit inbound rules** -> **Add rule**.
+4. Set **Type:** Custom TCP, **Port range:** 8000, **Source:** Anywhere-IPv4 (`0.0.0.0/0`).
+5. Click **Save rules**.
 
-## Step 3: Connect to Your EC2 Server
-1. Open your computer's terminal (Command Prompt on Windows, Terminal on Mac/Linux).
-2. Navigate to the folder where you downloaded your `.pem` key file in Step 1.
+## Step 5: Connect to Your EC2 Server
+1. Open your terminal.
+2. Navigate to where your `.pem` key was downloaded.
 3. Fix permissions on the key (Mac/Linux only):
    ```bash
    chmod 400 house-app-key.pem
@@ -43,65 +53,59 @@ By default, we will run Gunicorn on port 8000. We need to tell the AWS firewall 
    ```bash
    ssh -i "house-app-key.pem" ubuntu@<YOUR-EC2-PUBLIC-IP>
    ```
-   *Type `yes` when prompted if you want to continue connecting.*
 
-## Step 4: Prepare the Server & Install Miniconda
-Because Machine Learning libraries (like Scikit-Learn and NumPy) often have strict version dependencies, we will use **Miniconda** to create a highly stable Python 3.10 environment, rather than the default system Python.
+## Step 6: Prepare the Server & Install Miniconda
+1. Update the server and install tools:
+   ```bash
+   sudo apt update
+   sudo apt upgrade -y
+   sudo apt install git wget build-essential -y
+   ```
+2. Install Miniconda for a stable Python 3.10 environment:
+   ```bash
+   wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+   bash Miniconda3-latest-Linux-x86_64.sh -b -p $HOME/miniconda
+   source $HOME/miniconda/bin/activate
+   conda init
+   ```
+3. Refresh your shell by typing `source ~/.bashrc` or logging out and back in.
 
-1. Update the server and install basic tools:
+## Step 7: Download the Project
+Clone the V3.0 repository:
 ```bash
-sudo apt update
-sudo apt upgrade -y
-sudo apt install git wget build-essential -y
+git clone https://github.com/akansana-work/House-Price_V3.0.git
+cd House-Price_V3.0
 ```
 
-2. Download and install Miniconda:
-```bash
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-bash Miniconda3-latest-Linux-x86_64.sh -b -p $HOME/miniconda
-```
-
-3. Activate Miniconda in your current shell:
-```bash
-source $HOME/miniconda/bin/activate
-conda init
-```
-
-## Step 5: Download the Project
-Clone your repository onto the server:
-```bash
-git clone https://github.com/akansana-work/House-Price_V2.0.git
-cd House-Price_V2.0
-```
-*(Make sure to use your updated repository URL).*
-
-## Step 6: Set up the ML Python Environment
-Create an isolated Conda environment specifically for Python 3.10 to prevent dependency conflicts (e.g., `sklearn` and `numpy` version mismatches) that often occur with default `venv`:
+## Step 8: Set up the ML Python Environment
+Create the Conda environment to ensure Scikit-Learn, NumPy, and Boto3 work without conflicts:
 ```bash
 conda create --override-channels -c conda-forge -n ml_env python=3.10 -y
 conda activate ml_env
 pip install -r requirements.txt
 ```
 
-## Step 7: Run the Application
-Start the Flask app using Gunicorn so it listens to public traffic:
+## Step 9: Run the Application
+You must export the S3 bucket name so the Flask app knows where to fetch the `.pkl` files. Replace `your-bucket-name` with the bucket you created in Step 1.
+
 ```bash
+export S3_BUCKET_NAME="my-house-pricing-models-<your-name>"
 gunicorn --bind 0.0.0.0:8000 app:app
 ```
 
-## Step 8: View Your Live App!
+## Step 10: View Your Live App!
 Open your web browser and go to:
 ```
 http://<YOUR-EC2-PUBLIC-IP>:8000
 ```
-You should now see the House Price Prediction web interface!
+Because of the IAM Role attached to the EC2 instance, the app will seamlessly authenticate with AWS and pull the machine learning models down into memory when it starts up!
 
-## Optional: Keep it Running After Closing the Terminal
-If you use the command in Step 7, the app will shut down as soon as you close your SSH terminal. To keep it running in the background forever:
-
-1. Press `Ctrl + C` to stop the current Gunicorn server.
-2. Run this command instead:
+## Optional: Keep it Running in the Background
+To keep the application running after closing your terminal:
+1. Press `Ctrl + C` to stop the current server.
+2. Run:
    ```bash
+   export S3_BUCKET_NAME="my-house-pricing-models-<your-name>"
    nohup gunicorn --bind 0.0.0.0:8000 app:app &
    ```
-3. You can now safely close your terminal, and the app will remain online! To stop it in the future, use `pkill gunicorn`.
+3. Safely close your terminal.
