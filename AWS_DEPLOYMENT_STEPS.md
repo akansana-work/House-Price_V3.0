@@ -99,7 +99,6 @@ Now that the code is ready, here is the architecture setup you will perform in y
 4. **Deploy the App to EC2:**
    - SSH into the instance.
    - Clone your project.
-   - Export the bucket name: `export S3_BUCKET_NAME="house-price-models-akansana"`
    - Install dependencies and run the Flask application.
 
 Because of the IAM Role, `boto3` will securely and automatically retrieve temporary credentials in the background, keeping our architecture secure and production-ready!

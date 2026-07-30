@@ -86,10 +86,9 @@ pip install -r requirements.txt
 ```
 
 ## Step 9: Run the Application
-You must export the S3 bucket name so the Flask app knows where to fetch the `.pkl` files. Replace `your-bucket-name` with the bucket you created in Step 1.
+Start the Flask app using Gunicorn. Since we configured `house-price-models-akansana` as the default in our code, it will automatically connect to the correct bucket!
 
 ```bash
-export S3_BUCKET_NAME="house-price-models-akansana"
 gunicorn --bind 0.0.0.0:8000 app:app
 ```
 
@@ -105,7 +104,6 @@ To keep the application running after closing your terminal:
 1. Press `Ctrl + C` to stop the current server.
 2. Run:
    ```bash
-   export S3_BUCKET_NAME="house-price-models-akansana"
    nohup gunicorn --bind 0.0.0.0:8000 app:app &
    ```
 3. Safely close your terminal.
