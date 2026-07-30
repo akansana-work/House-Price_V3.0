@@ -1,11 +1,33 @@
 import pickle
+import os
+import boto3
+from botocore.exceptions import NoCredentialsError
 from flask import Flask,request,app,jsonify,url_for,render_template
 import numpy as np
 import pandas as pd
 
 app = Flask(__name__)
-model = pickle.load(open('housepred.pkl','rb'))
-scaler = pickle.load(open('scaler.pkl','rb'))
+
+# Configurable S3 Bucket (Uses environment variable, with a fallback placeholder)
+S3_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME', 'your-s3-bucket-name-here')
+
+s3_client = boto3.client('s3')
+
+def load_from_s3(key):
+    print(f"Loading {key} from S3 bucket: {S3_BUCKET_NAME}...")
+    try:
+        response = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=key)
+        return pickle.loads(response['Body'].read())
+    except NoCredentialsError:
+        print("Error: AWS credentials not found. Attach an IAM role to your EC2 instance.")
+        raise
+    except Exception as e:
+        print(f"Error fetching {key} from S3: {str(e)}")
+        raise
+
+# Load model and scaler dynamically from S3 at startup
+model = load_from_s3('housepred.pkl')
+scaler = load_from_s3('scaler.pkl')
 
 @app.route('/')
 def home():
